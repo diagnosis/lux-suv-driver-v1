@@ -21,7 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width, height } = Dimensions.get('window');
 const API_URL = 'https://luxsuv-backend.fly.dev';
 
-async function loginDriver(credentials: { username: string; password: string }) {
+async function loginDriver(credentials) {
     const response = await axios.post(`${API_URL}/driver/login`, credentials);
     return response.data;
 }
@@ -30,7 +30,7 @@ export default function LoginScreen() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState(null);
     const router = useRouter();
 
     const mutation = useMutation({
@@ -40,7 +40,7 @@ export default function LoginScreen() {
             setError(null);
             router.replace('/(tabs)/dashboard');
         },
-        onError: (error: any) => {
+        onError: (error) => {
             setError('Invalid credentials. Please try again.');
         },
     });
