@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -7,9 +8,37 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const storedUserData = await AsyncStorage.getItem('user_data');
+      if (storedUserData) {
+        setUserData(JSON.parse(storedUserData));
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'dispatcher':
+        return 'Dispatcher';
+      case 'super_driver':
+        return 'Super Driver';
+      case 'driver':
+      default:
+        return 'Driver';
+    }
+  };
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem('jwt_token');
+    await AsyncStorage.multiRemove(['jwt_token', 'user_data']);
     router.replace('/login');
   };
 
@@ -20,8 +49,9 @@ export default function ProfileScreen() {
           <View style={styles.avatarContainer}>
             <AntDesign name="user" size={48} color="#d6ad60" />
           </View>
-          <Text style={styles.name}>Driver Profile</Text>
-          <Text style={styles.email}>driver@luxsuv.com</Text>
+          <Text style={styles.name}>{userData?.username || 'Driver'}</Text>
+          <Text style={styles.role}>{getRoleDisplayName(userData?.role)}</Text>
+          <Text style={styles.email}>{userData?.email || 'driver@luxsuv.com'}</Text>
         </View>
 
         <View style={styles.menuSection}>
@@ -86,6 +116,12 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 16,
     color: '#b68d40',
+  },
+  role: {
+    fontSize: 14,
+    color: '#d6ad60',
+    fontWeight: '600',
+    marginBottom: 4,
   },
   menuSection: {
     flex: 1,

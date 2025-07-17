@@ -9,7 +9,7 @@ const API_CONFIG = {
 // API endpoints
 export const API_ENDPOINTS = {
   // Authentication
-  LOGIN: '/driver/login',
+  LOGIN: '/login',
   REGISTER: '/register',
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/auth/reset-password',
@@ -18,10 +18,24 @@ export const API_ENDPOINTS = {
   PROFILE: '/users/me',
   CHANGE_PASSWORD: '/users/me/password',
   
-  // Driver specific endpoints
-  DRIVER_BOOKINGS: '/driver/book-rides',
+  // Regular Driver endpoints
+  DRIVER_ASSIGNED_BOOKINGS: '/driver/bookings/assigned',
   ACCEPT_BOOKING: '/driver/bookings',
-  ASSIGNED_BOOKINGS: '/driver/bookings/assigned',
+  
+  // Super Driver endpoints
+  SUPER_DRIVER_AVAILABLE_BOOKINGS: '/super-driver/bookings/available',
+  SUPER_DRIVER_ASSIGN_BOOKING: '/super-driver/bookings',
+  SUPER_DRIVER_DRIVER_BOOKINGS: '/super-driver/bookings/driver',
+  
+  // Dispatcher endpoints
+  DISPATCHER_ALL_BOOKINGS: '/dispatcher/bookings/all',
+  DISPATCHER_AVAILABLE_BOOKINGS: '/dispatcher/bookings/available',
+  DISPATCHER_ASSIGN_BOOKING: '/dispatcher/bookings',
+  DISPATCHER_DRIVER_BOOKINGS: '/dispatcher/bookings/driver',
+  
+  // Management endpoints (for both dispatcher and super-driver)
+  MANAGEMENT_AVAILABLE_BOOKINGS: '/management/bookings/available',
+  MANAGEMENT_DRIVER_BOOKINGS: '/management/bookings/driver',
   
   // Booking management
   BOOK_RIDE: '/book-ride',

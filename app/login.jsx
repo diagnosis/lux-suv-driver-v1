@@ -30,7 +30,7 @@ async function loginDriver(credentials) {
 }
 
 export default function LoginScreen() {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState(null);
@@ -39,7 +39,10 @@ export default function LoginScreen() {
     const mutation = useMutation({
         mutationFn: loginDriver,
         onSuccess: async (data) => {
-            await AsyncStorage.setItem('jwt_token', data.token);
+            await AsyncStorage.multiSet([
+                ['jwt_token', data.token],
+                ['user_data', JSON.stringify(data.user)]
+            ]);
             setError(null);
             router.replace('/(tabs)/dashboard');
         },
@@ -49,12 +52,12 @@ export default function LoginScreen() {
     });
 
     const handleLogin = () => {
-        if (!username.trim() || !password.trim()) {
+        if (!email.trim() || !password.trim()) {
             setError('Please fill in all fields');
             return;
         }
         setError(null);
-        mutation.mutate({ username: username.trim(), password });
+        mutation.mutate({ email: email.trim(), password });
     };
 
     return (
@@ -92,15 +95,16 @@ export default function LoginScreen() {
 
                         <View style={styles.inputContainer}>
                             <View style={styles.inputWrapper}>
-                                <AntDesign name="user" size={20} color="#b68d40" style={styles.inputIcon} />
+                                <AntDesign name="mail" size={20} color="#b68d40" style={styles.inputIcon} />
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="Username"
+                                    placeholder="Email"
                                     placeholderTextColor="#b68d40"
-                                    value={username}
-                                    onChangeText={setUsername}
+                                    value={email}
+                                    onChangeText={setEmail}
                                     autoCapitalize="none"
                                     autoCorrect={false}
+                                    keyboardType="email-address"
                                 />
                             </View>
 

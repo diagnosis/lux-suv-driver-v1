@@ -18,13 +18,36 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width } = Dimensions.get('window');
 import API_CONFIG, { API_ENDPOINTS, buildUrl, getHeaders, handleApiError } from '@/config/api';
 
-async function fetchDashboardData(token: string) {
+async function fetchDashboardData(token: string, userRole: string) {
     try {
-        const response = await axios.get(buildUrl(API_ENDPOINTS.DRIVER_BOOKINGS), {
+        let endpoint;
+        
+        // Choose endpoint based on user role
+        switch (userRole) {
+            case 'dispatcher':
+                endpoint = API_ENDPOINTS.DISPATCHER_ALL_BOOKINGS;
+                break;
+            case 'super_driver':
+                endpoint = API_ENDPOINTS.SUPER_DRIVER_AVAILABLE_BOOKINGS;
+                break;
+            case 'driver':
+            default:
+                endpoint = API_ENDPOINTS.DRIVER_ASSIGNED_BOOKINGS;
+                break;
+        }
+        
+        const response = await axios.get(buildUrl(endpoint), {
             headers: getHeaders(token),
             timeout: API_CONFIG.TIMEOUT,
         });
-        return response.data;
+        
+        // Handle different response formats
+        if (Array.isArray(response.data)) {
+            return response.data; // For driver assigned bookings
+        } else if (response.data.bookings) {
+            return response.data.bookings; // For dispatcher/super-driver bookings
+        }
+        return [];
     } catch (error: any) {
         console.error('Dashboard fetch error:', error.response?.status, error.response?.data);
         throw new Error(handleApiError(error));
@@ -33,14 +56,21 @@ async function fetchDashboardData(token: string) {
 
 export default function DashboardScreen() {
     const [token, setToken] = React.useState('');
+    const [userRole, setUserRole] = React.useState('driver');
+    const [userName, setUserName] = React.useState('');
     const router = useRouter();
 
     useFocusEffect(
         React.useCallback(() => {
             async function loadToken() {
-                const storedToken = await AsyncStorage.getItem('jwt_token');
-                if (storedToken) {
-                    setToken(storedToken);
+                const [storedToken, userData] = await AsyncStorage.multiGet(['jwt_token', 'user_data']);
+                if (storedToken[1]) {
+                    setToken(storedToken[1]);
+                    if (userData[1]) {
+                        const user = JSON.parse(userData[1]);
+                        setUserRole(user.role || 'driver');
+                        setUserName(user.username || 'Driver');
+                    }
                 } else {
                     router.replace('/login');
                 }
@@ -50,17 +80,40 @@ export default function DashboardScreen() {
     );
 
     const { data, isLoading, error, refetch } = useQuery({
-        queryKey: ['dashboardData', token],
-        queryFn: () => fetchDashboardData(token),
+        queryKey: ['dashboardData', token, userRole],
+        queryFn: () => fetchDashboardData(token, userRole),
         enabled: !!token,
         retry: 1,
     });
 
     const handleLogout = async () => {
-        await AsyncStorage.removeItem('jwt_token');
+        await AsyncStorage.multiRemove(['jwt_token', 'user_data']);
         router.replace('/login');
     };
 
+    const getRoleDisplayName = (role: string) => {
+        switch (role) {
+            case 'dispatcher':
+                return 'Dispatcher';
+            case 'super_driver':
+                return 'Super Driver';
+            case 'driver':
+            default:
+                return 'Driver';
+        }
+    };
+
+    const getDashboardTitle = (role: string) => {
+        switch (role) {
+            case 'dispatcher':
+                return 'All Bookings';
+            case 'super_driver':
+                return 'Available Bookings';
+            case 'driver':
+            default:
+                return 'My Assigned Rides';
+        }
+    };
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             weekday: 'short',
@@ -89,7 +142,8 @@ export default function DashboardScreen() {
                 {/* Header */}
                 <View style={styles.header}>
                     <View>
-                        <Text style={styles.greeting}>Good morning</Text>
+                        <Text style={styles.greeting}>Good morning, {getRoleDisplayName(userRole)}</Text>
+                        <Text style={styles.userName}>{userName}</Text>
                         <Text style={styles.date}>{new Date().toLocaleDateString('en-US', {
                             weekday: 'long',
                             year: 'numeric',
@@ -107,7 +161,10 @@ export default function DashboardScreen() {
                     <View style={styles.statCard}>
                         <AntDesign name="car" size={24} color="#d6ad60" />
                         <Text style={styles.statNumber}>{data?.length || 0}</Text>
-                        <Text style={styles.statLabel}>Active Rides</Text>
+                        <Text style={styles.statLabel}>
+                            {userRole === 'dispatcher' ? 'Total Bookings' : 
+                             userRole === 'super_driver' ? 'Available Rides' : 'Assigned Rides'}
+                        </Text>
                     </View>
                     <View style={styles.statCard}>
                         <AntDesign name="clockcircle" size={24} color="#d6ad60" />
@@ -119,7 +176,7 @@ export default function DashboardScreen() {
                 {/* Rides Section */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Today's Rides</Text>
+                        <Text style={styles.sectionTitle}>{getDashboardTitle(userRole)}</Text>
                         <TouchableOpacity>
                             <Text style={styles.seeAll}>See All</Text>
                         </TouchableOpacity>
@@ -147,17 +204,30 @@ export default function DashboardScreen() {
                                         <Text style={styles.rideTime}>
                                             {formatDate(ride.date)} • {formatTime(ride.time)}
                                         </Text>
+                                        {ride.driver_name && (
+                                            <Text style={styles.driverName}>
+                                                Driver: {ride.driver_name}
+                                            </Text>
+                                        )}
                                     </View>
                                     <View style={styles.rideStatus}>
-                                        <Text style={styles.statusText}>Active</Text>
+                                        <Text style={styles.statusText}>{ride.book_status}</Text>
                                     </View>
                                 </View>
                                 <View style={styles.rideLocation}>
                                     <AntDesign name="enviromento" size={16} color="#b68d40" />
                                     <Text style={styles.locationText}>{ride.pickup_location}</Text>
                                 </View>
+                                {ride.dropoff_location && (
+                                    <View style={styles.rideLocation}>
+                                        <AntDesign name="arrowright" size={16} color="#b68d40" />
+                                        <Text style={styles.locationText}>{ride.dropoff_location}</Text>
+                                    </View>
+                                )}
                                 <TouchableOpacity style={styles.rideAction}>
-                                    <Text style={styles.actionText}>View Details</Text>
+                                    <Text style={styles.actionText}>
+                                        {userRole === 'driver' && ride.book_status === 'Accepted' ? 'Start Ride' : 'View Details'}
+                                    </Text>
                                     <AntDesign name="arrowright" size={16} color="#d6ad60" />
                                 </TouchableOpacity>
                             </View>
@@ -166,9 +236,12 @@ export default function DashboardScreen() {
                         !isLoading && (
                             <View style={styles.emptyState}>
                                 <AntDesign name="car" size={48} color="#b68d40" />
-                                <Text style={styles.emptyTitle}>No rides today</Text>
+                                <Text style={styles.emptyTitle}>
+                                    {userRole === 'dispatcher' ? 'No bookings found' :
+                                     userRole === 'super_driver' ? 'No available rides' : 'No assigned rides'}
+                                </Text>
                                 <Text style={styles.emptySubtitle}>
-                                    Check back later for new ride requests
+                                    {userRole === 'driver' ? 'Check back later for new assignments' : 'Check back later for new bookings'}
                                 </Text>
                             </View>
                         )
@@ -198,6 +271,11 @@ const styles = StyleSheet.create({
         fontSize: 28,
         fontWeight: 'bold',
         color: '#f4ebd0',
+        marginBottom: 4,
+    },
+    userName: {
+        fontSize: 16,
+        color: '#d6ad60',
         marginBottom: 4,
     },
     date: {
@@ -307,6 +385,12 @@ const styles = StyleSheet.create({
     rideTime: {
         fontSize: 14,
         color: '#b68d40',
+    },
+    driverName: {
+        fontSize: 12,
+        color: '#d6ad60',
+        fontStyle: 'italic',
+        marginTop: 2,
     },
     rideStatus: {
         backgroundColor: 'rgba(214, 173, 96, 0.2)',
