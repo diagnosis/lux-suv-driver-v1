@@ -19,10 +19,13 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
-const API_URL = 'https://luxsuv-v4.onrender.com';
+import API_CONFIG, { API_ENDPOINTS, buildUrl, getHeaders, handleApiError } from '@/config/api';
 
 async function loginDriver(credentials) {
-    const response = await axios.post(`${API_URL}/driver/login`, credentials);
+    const response = await axios.post(buildUrl(API_ENDPOINTS.LOGIN), credentials, {
+        headers: getHeaders(),
+        timeout: API_CONFIG.TIMEOUT,
+    });
     return response.data;
 }
 

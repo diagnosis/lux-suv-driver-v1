@@ -16,17 +16,18 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
-const API_URL = 'https://luxsuv-v4.onrender.com';
+import API_CONFIG, { API_ENDPOINTS, buildUrl, getHeaders, handleApiError } from '@/config/api';
 
 async function fetchDashboardData(token: string) {
     try {
-        const response = await axios.get(`${API_URL}/driver/book-rides`, {
-            headers: { Authorization: `Bearer ${token}` },
+        const response = await axios.get(buildUrl(API_ENDPOINTS.DRIVER_BOOKINGS), {
+            headers: getHeaders(token),
+            timeout: API_CONFIG.TIMEOUT,
         });
         return response.data;
     } catch (error: any) {
-        console.error('Fetch error:', error.response?.status, error.response?.data);
-        throw new Error('Failed to fetch dashboard data');
+        console.error('Dashboard fetch error:', error.response?.status, error.response?.data);
+        throw new Error(handleApiError(error));
     }
 }
 
