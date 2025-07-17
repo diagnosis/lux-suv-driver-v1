@@ -16,7 +16,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
-const API_URL = 'https://luxsuv-backend.fly.dev';
+const API_URL = 'https://luxsuv-v4.onrender.com';
 
 async function fetchDashboardData(token: string) {
     try {
