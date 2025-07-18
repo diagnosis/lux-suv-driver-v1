@@ -1,6 +1,6 @@
 // API Configuration for LuxSUV Driver App
 const API_CONFIG = {
-  BASE_URL: 'https://luxsuv-v4.onrender.com',
+  BASE_URL: __DEV__ ? 'https://luxsuv-v4.onrender.com' : 'https://luxsuv-v4.onrender.com',
   TIMEOUT: 30000, // 30 seconds
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000, // 1 second
