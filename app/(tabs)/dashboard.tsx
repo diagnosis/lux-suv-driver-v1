@@ -20,6 +20,8 @@ import API_CONFIG, { API_ENDPOINTS, buildUrl, getHeaders, handleApiError } from 
 
 async function fetchDashboardData(token: string, userRole: string) {
     try {
+        console.log('Fetching dashboard data for role:', userRole);
+        
         let endpoint;
         
         // Choose endpoint based on user role
@@ -36,10 +38,19 @@ async function fetchDashboardData(token: string, userRole: string) {
                 break;
         }
         
+        const url = buildUrl(endpoint);
+        const headers = getHeaders(token);
+        
+        console.log('Making request to:', url);
+        console.log('With headers:', headers);
+        
         const response = await axios.get(buildUrl(endpoint), {
             headers: getHeaders(token),
             timeout: API_CONFIG.TIMEOUT,
         });
+        
+        console.log('Response status:', response.status);
+        console.log('Response data:', response.data);
         
         // Handle different response formats
         if (Array.isArray(response.data)) {
@@ -49,7 +60,18 @@ async function fetchDashboardData(token: string, userRole: string) {
         }
         return [];
     } catch (error: any) {
-        console.error('Dashboard fetch error:', error.response?.status, error.response?.data);
+        console.error('Dashboard fetch error details:', {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            message: error.message,
+            code: error.code,
+            config: {
+                url: error.config?.url,
+                method: error.config?.method,
+                headers: error.config?.headers,
+            }
+        });
         throw new Error(handleApiError(error));
     }
 }
@@ -191,7 +213,13 @@ export default function DashboardScreen() {
                     {error && (
                         <View style={styles.errorContainer}>
                             <AntDesign name="exclamationcircle" size={20} color="#ff6b6b" />
-                            <Text style={styles.errorText}>Failed to load rides</Text>
+                            <Text style={styles.errorText}>{error.message || 'Failed to load rides'}</Text>
+                            <TouchableOpacity 
+                                style={styles.retryButton} 
+                                onPress={() => refetch()}
+                            >
+                                <Text style={styles.retryText}>Retry</Text>
+                            </TouchableOpacity>
                         </View>
                     )}
 
@@ -358,6 +386,18 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginLeft: 8,
         flex: 1,
+    },
+    retryButton: {
+        backgroundColor: 'rgba(255, 107, 107, 0.2)',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        marginLeft: 8,
+    },
+    retryText: {
+        color: '#ff6b6b',
+        fontSize: 12,
+        fontWeight: '600',
     },
     rideCard: {
         backgroundColor: 'rgba(244, 235, 208, 0.05)',

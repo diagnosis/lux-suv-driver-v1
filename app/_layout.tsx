@@ -12,8 +12,13 @@ export default function RootLayout() {
   
   useEffect(() => {
     // Debug network configuration on app start
-    getNetworkInfo();
-    testNetworkConnectivity();
+    const initializeApp = async () => {
+      getNetworkInfo();
+      const isConnected = await testNetworkConnectivity();
+      console.log('Initial connectivity test result:', isConnected);
+    };
+    
+    initializeApp();
   }, []);
   
   return (

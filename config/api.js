@@ -84,9 +84,12 @@ export const buildUrl = (endpoint) => {
 
 // Error handling
 export const handleApiError = (error) => {
+  console.log('Handling API error:', error);
+  
   if (error.response) {
     // Server responded with error status
     const { status, data } = error.response;
+    console.log('Server error response:', { status, data });
     
     switch (status) {
       case HTTP_STATUS.UNAUTHORIZED:
@@ -104,9 +107,11 @@ export const handleApiError = (error) => {
     }
   } else if (error.request) {
     // Network error
+    console.log('Network error:', error.request);
     return 'Network error. Please check your connection.';
   } else {
     // Other error
+    console.log('Other error:', error.message);
     return error.message || 'An unexpected error occurred';
   }
 };

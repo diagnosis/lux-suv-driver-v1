@@ -23,10 +23,18 @@ export const getNetworkInfo = () => {
 // Test network connectivity
 export const testNetworkConnectivity = async () => {
   try {
+    console.log('Testing connectivity to:', `${getApiBaseUrl()}/health`);
+    
     const response = await fetch(`${getApiBaseUrl()}/health`, {
       method: 'GET',
-      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
+    
+    console.log('Health check response status:', response.status);
+    const responseText = await response.text();
+    console.log('Health check response body:', responseText);
     
     if (response.ok) {
       console.log('✅ Network connectivity test passed');
@@ -37,6 +45,7 @@ export const testNetworkConnectivity = async () => {
     }
   } catch (error) {
     console.log('❌ Network connectivity test error:', error.message);
+    console.log('Full error details:', error);
     return false;
   }
 };
