@@ -10,6 +10,7 @@ export const TRACKING_ENDPOINTS = {
   // Rider tracking endpoints
   LIVE_TRACKING: '/tracking/bookings/{bookingId}/live',
   COMPREHENSIVE_TRACKING: '/tracking/bookings/{bookingId}',
+  TRACKING_STATUS: '/tracking/bookings/{bookingId}/status',
   
   // Admin/Dispatcher tracking endpoints
   ACTIVE_SESSIONS: '/admin/tracking/sessions/active',

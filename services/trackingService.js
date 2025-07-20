@@ -77,6 +77,20 @@ class TrackingService {
     }
   }
 
+  // Check tracking status for a specific booking
+  async checkTrackingStatus(bookingId, token) {
+    try {
+      const endpoint = TRACKING_ENDPOINTS.TRACKING_STATUS.replace('{bookingId}', bookingId);
+      const response = await axios.get(buildUrl(endpoint), {
+        headers: getHeaders(token),
+        timeout: API_CONFIG.TIMEOUT,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
   // Rider Tracking Methods
   async getLiveTracking(bookingId, token) {
     try {

@@ -59,6 +59,7 @@ export const API_ENDPOINTS = {
   UPDATE_LOCATION: '/driver/tracking/location',
   LIVE_TRACKING: '/tracking/bookings/{bookingId}/live',
   COMPREHENSIVE_TRACKING: '/tracking/bookings/{bookingId}',
+  TRACKING_STATUS: '/tracking/bookings/{bookingId}/status',
   ACTIVE_SESSIONS: '/admin/tracking/sessions/active',
   ACTIVE_RIDES: '/admin/tracking/rides/active',
 };
