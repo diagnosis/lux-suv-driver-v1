@@ -56,6 +56,26 @@ export default function TrackingScreen() {
     }
   };
 
+  // Check for existing tracking sessions
+  const { data: activeSessions } = useQuery({
+    queryKey: ['activeSessions', token, userRole],
+    queryFn: async () => {
+      if (userRole === 'dispatcher') {
+        return await trackingService.getActiveSessions(token);
+      }
+      return { sessions: [] };
+    },
+    enabled: !!token && userRole === 'dispatcher',
+    onSuccess: (data) => {
+      // Check if any session is active and update UI state
+      if (data?.sessions?.length > 0) {
+        const activeSession = data.sessions[0];
+        setIsTrackingActive(true);
+        setSelectedBooking({ id: activeSession.booking_id });
+      }
+    },
+  });
+
   // Fetch active rides based on user role
   const { data: ridesData, isLoading, error, refetch } = useQuery({
     queryKey: ['activeRides', token, userRole],
@@ -79,6 +99,13 @@ export default function TrackingScreen() {
     },
     enabled: !!token,
     refetchInterval: 30000, // Refetch every 30 seconds
+    onSuccess: (data) => {
+      // For drivers, check if any ride has active tracking
+      if (userRole === 'driver' && Array.isArray(data)) {
+        // Check each ride for active tracking sessions (this would need backend support)
+        // For now, we'll handle it in the mutation error
+      }
+    },
   });
 
   // Start tracking mutation
@@ -124,7 +151,36 @@ export default function TrackingScreen() {
       return result;
     },
     onError: (error) => {
-      Alert.alert('Error', error.message);
+      // Handle "tracking session already active" error
+      if (error.message?.includes('tracking session already active')) {
+        // Update UI to show tracking is active
+        setIsTrackingActive(true);
+        setSelectedBooking(selectedBooking);
+        
+        // Try to connect WebSocket since tracking is already active
+        if (selectedBooking) {
+          trackingService.connectWebSocket(
+            userId,
+            userRole,
+            selectedBooking.id,
+            (message) => {
+              console.log('WebSocket message:', message);
+            },
+            (error) => {
+              console.error('WebSocket error:', error);
+              setWebSocketConnected(false);
+            },
+            () => {
+              setWebSocketConnected(false);
+            }
+          );
+          setWebSocketConnected(true);
+        }
+        
+        Alert.alert('Info', 'Tracking session is already active for this ride.');
+      } else {
+        Alert.alert('Error', error.message);
+      }
     },
   });
 
@@ -136,6 +192,7 @@ export default function TrackingScreen() {
       setIsTrackingActive(false);
       setWebSocketConnected(false);
       setCurrentLocation(null);
+      setSelectedBooking(null);
       return result;
     },
     onError: (error) => {
@@ -159,7 +216,6 @@ export default function TrackingScreen() {
   const handleStopTracking = () => {
     if (selectedBooking) {
       stopTrackingMutation.mutate(selectedBooking.id);
-      setSelectedBooking(null);
     }
   };
 
