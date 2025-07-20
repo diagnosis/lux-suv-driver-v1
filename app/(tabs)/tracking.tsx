@@ -663,4 +663,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  statusBadge: {
+    marginTop: 8,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(214, 173, 96, 0.2)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  statusBadgeText: {
+    color: '#d6ad60',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
 });
