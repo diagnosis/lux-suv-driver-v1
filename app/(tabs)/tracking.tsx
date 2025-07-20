@@ -39,6 +39,56 @@ export default function TrackingScreen() {
     }, [])
   );
 
+  // Check tracking status for all rides when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      const checkAllRidesTrackingStatus = async () => {
+        if (!token || !ridesData) return;
+        
+        const rides = Array.isArray(ridesData) ? ridesData : [];
+        
+        // Check each assigned ride for active tracking
+        for (const ride of rides) {
+          try {
+            const status = await trackingService.checkTrackingStatus(ride.id, token);
+            
+            if (status.tracking_active) {
+              setIsTrackingActive(true);
+              setSelectedBooking(ride);
+              
+              // Connect WebSocket if not already connected
+              if (!webSocketConnected) {
+                trackingService.connectWebSocket(
+                  userId,
+                  userRole,
+                  ride.id,
+                  (message) => {
+                    console.log('WebSocket message:', message);
+                  },
+                  (error) => {
+                    console.error('WebSocket error:', error);
+                    setWebSocketConnected(false);
+                  },
+                  () => {
+                    setWebSocketConnected(false);
+                  }
+                );
+                setWebSocketConnected(true);
+              }
+              break; // Only one active tracking session at a time
+            }
+          } catch (error) {
+            console.error('Error checking tracking status for ride', ride.id, ':', error);
+          }
+        }
+      };
+      
+      if (token && ridesData) {
+        checkAllRidesTrackingStatus();
+      }
+    }, [token, ridesData, userId, userRole, webSocketConnected])
+  );
+
   const loadUserData = async () => {
     try {
       const [storedToken, userData] = await AsyncStorage.multiGet(['jwt_token', 'user_data']);
