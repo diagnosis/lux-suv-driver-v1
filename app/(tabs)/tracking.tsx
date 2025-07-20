@@ -106,26 +106,6 @@ export default function TrackingScreen() {
     }
   };
 
-  // Check for existing tracking sessions
-  const { data: activeSessions } = useQuery({
-    queryKey: ['activeSessions', token, userRole],
-    queryFn: async () => {
-      if (userRole === 'dispatcher') {
-        return await trackingService.getActiveSessions(token);
-      }
-      return { sessions: [] };
-    },
-    enabled: !!token && userRole === 'dispatcher',
-    onSuccess: (data) => {
-      // Check if any session is active and update UI state
-      if (data?.sessions?.length > 0) {
-        const activeSession = data.sessions[0];
-        setIsTrackingActive(true);
-        setSelectedBooking({ id: activeSession.booking_id });
-      }
-    },
-  });
-
   // Fetch active rides based on user role
   const { data: ridesData, isLoading, error, refetch } = useQuery({
     queryKey: ['activeRides', token, userRole],
@@ -154,6 +134,26 @@ export default function TrackingScreen() {
       if (userRole === 'driver' && Array.isArray(data)) {
         // Check each ride for active tracking sessions (this would need backend support)
         // For now, we'll handle it in the mutation error
+      }
+    },
+  });
+
+  // Check for existing tracking sessions
+  const { data: activeSessions } = useQuery({
+    queryKey: ['activeSessions', token, userRole],
+    queryFn: async () => {
+      if (userRole === 'dispatcher') {
+        return await trackingService.getActiveSessions(token);
+      }
+      return { sessions: [] };
+    },
+    enabled: !!token && userRole === 'dispatcher',
+    onSuccess: (data) => {
+      // Check if any session is active and update UI state
+      if (data?.sessions?.length > 0) {
+        const activeSession = data.sessions[0];
+        setIsTrackingActive(true);
+        setSelectedBooking({ id: activeSession.booking_id });
       }
     },
   });
