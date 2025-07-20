@@ -36,7 +36,7 @@ export default function TrackingScreen() {
       if (userRole === 'dispatcher') {
         return await trackingService.getActiveRides(token);
       } else {
-        // For drivers, get assigned bookings from dashboard data
+        // For drivers, get assigned bookings
         const response = await fetch(
           `${process.env.EXPO_PUBLIC_API_URL || 'https://luxsuv-v4.onrender.com'}/driver/bookings/assigned`,
           {
@@ -52,13 +52,6 @@ export default function TrackingScreen() {
     },
     enabled: !!token,
     refetchInterval: 30000, // Refetch every 30 seconds
-    onSuccess: (data) => {
-      // For drivers, check if any ride has active tracking
-      if (userRole === 'driver' && Array.isArray(data)) {
-        // Check each ride for active tracking sessions (this would need backend support)
-        // For now, we'll handle it in the mutation error
-      }
-    },
   });
 
   // Load user data
@@ -85,6 +78,7 @@ export default function TrackingScreen() {
             const status = await trackingService.checkTrackingStatus(ride.id, token);
             
             if (status.tracking_active) {
+              // Show stop tracking button and live status
               setIsTrackingActive(true);
               setSelectedBooking(ride);
               
@@ -108,6 +102,9 @@ export default function TrackingScreen() {
                 setWebSocketConnected(true);
               }
               break; // Only one active tracking session at a time
+            } else if (status.driver_assigned) {
+              // Show start tracking button - ready to track
+              // UI will show start button by default when isTrackingActive is false
             }
           } catch (error) {
             console.error('Error checking tracking status for ride', ride.id, ':', error);
@@ -273,6 +270,16 @@ export default function TrackingScreen() {
     navigationMutation.mutate(booking.id);
   };
 
+  // Function to get status badge text based on tracking status
+  const getStatusBadgeText = (ride: any) => {
+    if (isTrackingActive && selectedBooking?.id === ride.id) {
+      return "🔴 Live Tracking";
+    } else if (ride.book_status === 'Accepted') {
+      return "Ready to Track";
+    }
+    return ride.book_status;
+  };
+
   const renderDriverView = () => {
     const rides = Array.isArray(ridesData) ? ridesData : [];
 
@@ -292,7 +299,7 @@ export default function TrackingScreen() {
               <View style={styles.rideHeader}>
                 <Text style={styles.rideName}>{ride.your_name}</Text>
                 <View style={styles.rideStatus}>
-                  <Text style={styles.statusText}>{ride.book_status}</Text>
+                  <Text style={styles.statusText}>{getStatusBadgeText(ride)}</Text>
                 </View>
               </View>
 
