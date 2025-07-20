@@ -29,6 +29,38 @@ export default function TrackingScreen() {
   const [webSocketConnected, setWebSocketConnected] = useState(false);
   const router = useRouter();
 
+  // Fetch active rides based on user role - moved before useFocusEffect hooks
+  const { data: ridesData, isLoading, error, refetch } = useQuery({
+    queryKey: ['activeRides', token, userRole],
+    queryFn: async () => {
+      if (userRole === 'dispatcher') {
+        return await trackingService.getActiveRides(token);
+      } else {
+        // For drivers, get assigned bookings from dashboard data
+        const response = await fetch(
+          `${process.env.EXPO_PUBLIC_API_URL || 'https://luxsuv-v4.onrender.com'}/driver/bookings/assigned`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      }
+    },
+    enabled: !!token,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    onSuccess: (data) => {
+      // For drivers, check if any ride has active tracking
+      if (userRole === 'driver' && Array.isArray(data)) {
+        // Check each ride for active tracking sessions (this would need backend support)
+        // For now, we'll handle it in the mutation error
+      }
+    },
+  });
+
   // Load user data
   useFocusEffect(
     useCallback(() => {
@@ -105,38 +137,6 @@ export default function TrackingScreen() {
       router.replace('/login');
     }
   };
-
-  // Fetch active rides based on user role
-  const { data: ridesData, isLoading, error, refetch } = useQuery({
-    queryKey: ['activeRides', token, userRole],
-    queryFn: async () => {
-      if (userRole === 'dispatcher') {
-        return await trackingService.getActiveRides(token);
-      } else {
-        // For drivers, get assigned bookings from dashboard data
-        const response = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL || 'https://luxsuv-v4.onrender.com'}/driver/bookings/assigned`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-      }
-    },
-    enabled: !!token,
-    refetchInterval: 30000, // Refetch every 30 seconds
-    onSuccess: (data) => {
-      // For drivers, check if any ride has active tracking
-      if (userRole === 'driver' && Array.isArray(data)) {
-        // Check each ride for active tracking sessions (this would need backend support)
-        // For now, we'll handle it in the mutation error
-      }
-    },
-  });
 
   // Check for existing tracking sessions
   const { data: activeSessions } = useQuery({
