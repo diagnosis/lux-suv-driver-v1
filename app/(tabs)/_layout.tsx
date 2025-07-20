@@ -40,6 +40,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="tracking"
+        options={{
+          title: 'Tracking',
+          tabBarIcon: ({ size, color }) => (
+            <AntDesign name="enviromento" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',

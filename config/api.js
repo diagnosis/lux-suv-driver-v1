@@ -50,6 +50,17 @@ export const API_ENDPOINTS = {
   
   // Health check
   HEALTH: '/health',
+  
+  // Tracking endpoints
+  DRIVER_NAVIGATION: '/driver/bookings/{bookingId}/navigation',
+  DRIVER_NAVIGATION_ALT: '/driver/tracking/bookings/{bookingId}/navigation',
+  START_TRACKING: '/driver/tracking/bookings/{bookingId}/start',
+  STOP_TRACKING: '/driver/tracking/bookings/{bookingId}/stop',
+  UPDATE_LOCATION: '/driver/tracking/location',
+  LIVE_TRACKING: '/tracking/bookings/{bookingId}/live',
+  COMPREHENSIVE_TRACKING: '/tracking/bookings/{bookingId}',
+  ACTIVE_SESSIONS: '/admin/tracking/sessions/active',
+  ACTIVE_RIDES: '/admin/tracking/rides/active',
 };
 
 // HTTP status codes
