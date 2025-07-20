@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as Location from 'expo-location';
+import { Platform } from 'react-native';
 import API_CONFIG, { buildUrl, getHeaders, handleApiError } from '@/config/api';
 import { TRACKING_ENDPOINTS, createWebSocketUrl } from '@/config/tracking';
 
@@ -192,7 +193,16 @@ class TrackingService {
 
   stopLocationTracking() {
     if (this.locationSubscription) {
-      this.locationSubscription.remove();
+      // Handle different subscription types for different platforms
+      if (Platform.OS === 'web' && typeof this.locationSubscription === 'number') {
+        // On web, it might be a watchId from navigator.geolocation
+        if (navigator.geolocation && navigator.geolocation.clearWatch) {
+          navigator.geolocation.clearWatch(this.locationSubscription);
+        }
+      } else if (this.locationSubscription.remove) {
+        // For native platforms or proper subscription objects
+        this.locationSubscription.remove();
+      }
       this.locationSubscription = null;
     }
     this.isTracking = false;

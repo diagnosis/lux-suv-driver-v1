@@ -86,6 +86,9 @@ export default function TrackingScreen() {
     mutationFn: async (bookingId: number) => {
       const result = await trackingService.startTrackingSession(bookingId, token);
       
+      // Add delay to ensure backend tracking session is fully active
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Start location tracking
       await trackingService.startLocationTracking(
         bookingId,
