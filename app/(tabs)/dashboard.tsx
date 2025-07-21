@@ -108,6 +108,15 @@ export default function DashboardScreen() {
         retry: 1,
     });
 
+    // Handle 401 unauthorized errors by redirecting to login
+    React.useEffect(() => {
+        if (error && error.message.includes('401')) {
+            AsyncStorage.multiRemove(['jwt_token', 'user_data']).then(() => {
+                router.replace('/login');
+            });
+        }
+    }, [error, router]);
+
     const handleLogout = async () => {
         await AsyncStorage.multiRemove(['jwt_token', 'user_data']);
         router.replace('/login');
